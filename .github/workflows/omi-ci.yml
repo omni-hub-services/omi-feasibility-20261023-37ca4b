@@ -1,0 +1,23 @@
+name: OMI real CI fixture
+on:
+  pull_request:
+    branches: [development]
+permissions:
+  contents: read
+jobs:
+  verify:
+    name: omi-ci
+    if: github.event.pull_request.head.repo.full_name == github.repository && (github.actor == 'minibox-ttin' || github.actor == 'minibox-claude-code')
+    runs-on: [self-hosted, omi-ci-34ad7dd0]
+    timeout-minutes: 3
+    steps:
+      - name: Fetch exact fixture commit and test
+        env:
+          TARGET_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          [[ "$TARGET_SHA" =~ ^[0-9a-f]{40}$ ]]
+          git init work
+          git -C work fetch --depth=1 https://github.com/omni-hub-services/omi-feasibility-20261023-37ca4b.git "$TARGET_SHA"
+          git -C work checkout --detach FETCH_HEAD
+          cd work
+          python3 -m unittest -v
